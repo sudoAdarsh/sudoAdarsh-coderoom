@@ -1,11 +1,21 @@
+import { useState, useEffect } from "react";
+
 function App() {
-  // TODO: render a single <h1> that says "CodeRoom"
-  //   - style it with Tailwind classes (any that visibly prove Tailwind is working,
-  //     e.g. text size, color, centering, padding)
-  //   - no fetch, no state, no components yet
+  const [health, setHealth] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:8080/api/health")
+      .then((response) => response.json())
+      .then((json) => setHealth(json["status"]))
+      .catch((error) => setError(error.message));
+  }, []);
+
   return (
-    <div>
-      <h1 className="text-3xl font-semibold text-center p-2 m-2">CodeRoom</h1>
+    <div className="p-8">
+      <h1 className="text-2xl font-bold mb-4">CodeRoom</h1>
+      {error && <p className="text-red-500">Error: {error}</p>}
+      {health && <p>Backend status: {health}</p>}
     </div>
   );
 }
