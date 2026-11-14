@@ -27,3 +27,9 @@
 #     main()
 
 
+import secrets
+import string
+
+alpha = string.ascii_lowercase + string.digits
+
+print("".join(secrets.choice(alpha) for _ in range(6)))
