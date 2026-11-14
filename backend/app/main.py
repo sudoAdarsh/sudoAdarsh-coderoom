@@ -35,8 +35,7 @@ def generate_room_id(length: int = 6) -> str:
 def create_room(body: RoomCreate, session: Session = Depends(get_session)):
     for n in range(5):
         room = Room(
-            # id=generate_room_id(),
-            id="asdfgh",
+            id=generate_room_id(),
             host_client_id=body.host_client_id,
         )
         try:
