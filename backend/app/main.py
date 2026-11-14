@@ -41,18 +41,13 @@ def create_room(body: RoomCreate, session: Session = Depends(get_session)):
             session.commit()
             session.refresh(room)
             return room
-        except IntegrityError as exc:
+        except IntegrityError:
             session.rollback()
     raise HTTPException(
         status_code=500,
         detail="Could not allocate a unique room ID. Please try again."
     )
     
-
-
-                
-
-
 
 
 @app.get("/api/health")
