@@ -35,7 +35,8 @@ def generate_room_id(length: int = 6) -> str:
 def create_room(body: RoomCreate, session: Session = Depends(get_session)):
     for n in range(5):
         room = Room(
-            id=generate_room_id(),
+            # id=generate_room_id(),
+            id="asdfgh",
             host_client_id=body.host_client_id,
         )
         try:
@@ -45,6 +46,11 @@ def create_room(body: RoomCreate, session: Session = Depends(get_session)):
             return room
         except IntegrityError as exc:
             session.rollback()
+            if "UNIQUE" in str(exc.orig).upper():
+                continue
+            else:
+                raise
+            
     raise HTTPException(
         status_code=500,
         detail="Could not allocate a unique room ID. Please try again."
