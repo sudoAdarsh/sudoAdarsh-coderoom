@@ -15,17 +15,8 @@ function App() {
 
   const createRoom = async () => {
     try {
-      // TODO:
-      // 1. setLoading(true), clear error, clear room
       setLoading(true);
       setError(null);
-      setRoom(null);
-
-      // 2. POST to http://127.0.0.1:8080/api/rooms
-      //    - headers: { "Content-Type": "application/json" }
-      //    - body: JSON.stringify({ host_client_id: <some client id> })
-      //    - For now, hardcode host_client_id: "dev-host" — we'll do localStorage in Phase 2.
-      //      Note the TODO in DEVLOG: real client ID comes next phase.
 
       const response = await fetch("http://127.0.0.1:8080/api/rooms", {
         method: "POST",
@@ -34,20 +25,16 @@ function App() {
         },
         body: JSON.stringify({ host_client_id: "dev-host" }),
       });
-
-      // 3. If response.ok: parse json, setRoom(data)
-      // 4. If not ok: setError(`HTTP ${response.status}`)
-
       if (response.ok) {
-        data = await response.json();
+        const data = await response.json();
         setRoom(data);
       } else {
         setError(`HTTP ${response.status}`);
+        setRoom(null);
       }
-      // 5. catch network errors -> setError(err.message)
     } catch (err) {
       setError(err.message);
-      // 6. finally: setLoading(false)
+      setRoom(null);
     } finally {
       setLoading(false);
     }
@@ -56,8 +43,7 @@ function App() {
   return (
     <div className="p-8 max-w-md">
       <h1 className="text-2xl font-bold mb-4">CodeRoom</h1>
-      {health && <p>Backend status: {health}</p>}
-      {error && <p className="text-red-500">Error: {error}</p>}
+      {health && <p className="my-2">Backend status: {health}</p>}
       <button
         onClick={createRoom}
         disabled={loading}
@@ -66,11 +52,13 @@ function App() {
         {loading ? "Creating..." : "Create Room"}
       </button>
 
-      {/* TODO: three render branches:
-          - error: red <p>
-          - room: show "Room: <id>" — use room.id, styled
-          - neither: nothing
-      */}
+      {error && <p className="text-red-500">Error: {error}</p>}
+
+      {room && (
+        <p className="mt-4 text-lg font-semibold">
+          Room: <span className="font-mono">{room.id}</span>
+        </p>
+      )}
     </div>
   );
 }
