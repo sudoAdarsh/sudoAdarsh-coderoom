@@ -71,6 +71,7 @@ async def ws_room(websocket: WebSocket, room_id: str):
     try:
         while True:
             text = await websocket.receive_text()
+            print(f"{room_id}: {text}")
             await websocket.send_text(f"Message sent was: {text}")
     except WebSocketDisconnect:
         print(f"client left {room_id}")

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 function App() {
   const [room, setRoom] = useState(null);
@@ -40,14 +40,45 @@ function App() {
     }
   };
 
+  const wsRef = useRef(null);
+
+  const connectWs = () => {
+    if (!room) return;
+    if (wsRef.current) wsRef.current.close();
+    const ws = new WebSocket(`ws://127.0.0.1:8080/ws/${room.id}`);
+    ws.onopen = () => {
+      console.log("ws open");
+      ws.send("Hello from browser");
+    };
+    ws.onmessage = (e) => {
+      console.log("ws msg: ", e.data);
+    };
+    ws.onerror = (e) => {
+      console.log("ws error: ", e);
+    };
+    ws.onclose = () => {
+      console.log("ws closed");
+    };
+
+    wsRef.current = ws;
+  };
+
+  useEffect(() => {
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
+
   return (
     <div className="p-8 max-w-md">
       <h1 className="text-2xl font-bold mb-4">CodeRoom</h1>
-      {health && <p className="my-2">Backend status: {health}</p>}
+      {health && <p className="mt-2">Backend status: {health}</p>}
       <button
         onClick={createRoom}
         disabled={loading}
-        className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50 hover:bg-blue-500 active:bg-blue-700"
+        className="bg-blue-600 text-white mt-2 px-4 py-2 rounded disabled:opacity-50 hover:bg-blue-500 active:bg-blue-700"
       >
         {loading ? "Creating..." : "Create Room"}
       </button>
@@ -59,6 +90,14 @@ function App() {
           Room:{" "}
           <span className="font-mono uppercase tracking-widest">{room.id}</span>
         </p>
+      )}
+      {room && (
+        <button
+          className="block p-2 bg-blue-600 border border-blue-800 rounded text-white mt-2 hover:bg-blue-500 active:bg-blue-700"
+          onClick={connectWs}
+        >
+          Connect
+        </button>
       )}
     </div>
   );
