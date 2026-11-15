@@ -85,13 +85,18 @@ async def ws_room(websocket: WebSocket, room_id: str):
             payload = msg.get("payload")
 
             if type_ == "echo":
-                await send(
-                    websocket,
-                    "echo",
-                    {
-                        "text": payload["text"],
-                    },
-                )
+                try:
+                    await send(
+                        websocket,
+                        "echo",
+                        {
+                            "text": payload["text"],
+                        },
+                    )
+                except TypeError:
+                    await send(
+                        websocket, "error", {"message": "echo requires payload.text"}
+                    )
             elif type_ == "ping":
                 await send(
                     websocket,
