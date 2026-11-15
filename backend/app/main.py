@@ -1,10 +1,10 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from sqlmodel import Session, select
+from sqlmodel import Session
 from sqlalchemy.exc import IntegrityError
 
-from app.db import engine, get_session
+from app.db import get_session
 from app.models import Room
 from app.schemas import RoomCreate, RoomRead
 
@@ -63,3 +63,15 @@ def health():
         "service": "coderoom-api"
     }
 
+
+
+@app.websocket("/ws/{room_id}")
+async def ws_room(websocket: WebSocket, room_id: str):
+    await websocket.accept()
+    try:
+        while True:
+            text = await websocket.receive_text()
+            await websocket.send_text(f"Message sent was: {text}")
+    except WebSocketDisconnect:
+        print(f"client left {room_id}")
+        return

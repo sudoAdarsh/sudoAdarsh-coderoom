@@ -55,8 +55,9 @@ function App() {
       {error && <p className="text-red-500">Error: {error}</p>}
 
       {room && (
-        <p className="mt-4 text-lg font-semibold">
-          Room: <span className="font-mono">{room.id}</span>
+        <p className="mt-4 text-lg">
+          Room:{" "}
+          <span className="font-mono uppercase tracking-widest">{room.id}</span>
         </p>
       )}
     </div>
