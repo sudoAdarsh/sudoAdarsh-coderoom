@@ -1,31 +1,29 @@
-from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
+import json
+import secrets
+import string
+from datetime import datetime
 
-from sqlmodel import Session
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import IntegrityError
+from sqlmodel import Session
 
 from app.db import get_session
 from app.models import Room
 from app.schemas import RoomCreate, RoomRead
 
-import secrets
-import string
-from datetime import datetime
-
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5173", 
-        "http://localhost:5173"
-    ],
+    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 ALPHABET = string.ascii_lowercase + string.digits
+
 
 def generate_room_id(length: int = 6) -> str:
     return "".join(secrets.choice(ALPHABET) for _ in range(length))
@@ -49,20 +47,26 @@ def create_room(body: RoomCreate, session: Session = Depends(get_session)):
                 continue
             else:
                 raise
-            
+
     raise HTTPException(
-        status_code=500,
-        detail="Could not allocate a unique room ID. Please try again."
+        status_code=500, detail="Could not allocate a unique room ID. Please try again."
     )
 
 
 @app.get("/api/health")
 def health():
-    return {
-        "status": "ok",
-        "service": "coderoom-api"
-    }
+    return {"status": "ok", "service": "coderoom-api"}
 
+
+async def send(ws: WebSocket, type_, payload):
+    await ws.send_text(
+        json.dumps(
+            {
+                "type": type_,
+                "payload": payload,
+            }
+        )
+    )
 
 
 @app.websocket("/ws/{room_id}")
@@ -70,9 +74,34 @@ async def ws_room(websocket: WebSocket, room_id: str):
     await websocket.accept()
     try:
         while True:
-            text = await websocket.receive_text()
-            print(f"{room_id}: {text}")
-            await websocket.send_text(f"Message sent was: {text}")
+            raw = await websocket.receive_text()
+            try:
+                msg = json.loads(raw)
+            except json.JSONDecodeError:
+                await send(websocket, "error", {"message": "invalid json"})
+                continue
+
+            type_ = msg.get("type")
+            payload = msg.get("payload")
+
+            if type_ == "echo":
+                await send(
+                    websocket,
+                    "echo",
+                    {
+                        "text": payload["text"],
+                    },
+                )
+            elif type_ == "ping":
+                await send(
+                    websocket,
+                    "pong",
+                    {
+                        "at": "pong",
+                    },
+                )
+            else:
+                await send(websocket, "error", {"message": "unknown type"})
     except WebSocketDisconnect:
         print(f"client left {room_id}")
         return

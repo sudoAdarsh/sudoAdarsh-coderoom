@@ -48,10 +48,38 @@ function App() {
     const ws = new WebSocket(`ws://127.0.0.1:8080/ws/${room.id}`);
     ws.onopen = () => {
       console.log("ws open");
-      ws.send("Hello from browser");
+      ws.send(
+        JSON.stringify({
+          type: "echo",
+          payload: {
+            text: "hello",
+          },
+        }),
+      );
+
+      ws.send(
+        JSON.stringify({
+          type: "ping",
+          payload: {},
+        }),
+      );
     };
     ws.onmessage = (e) => {
-      console.log("ws msg: ", e.data);
+      const msg = JSON.parse(e.data);
+
+      switch (msg.type) {
+        case "echo":
+          console.log("echo: ", msg.payload.text);
+          break;
+        case "pong":
+          console.log("pong at: ", msg.payload.at);
+          break;
+        case "error":
+          console.log("server error: ", msg.payload.message);
+          break;
+        default:
+          console.warn("Unkown message type: ", msg.type);
+      }
     };
     ws.onerror = (e) => {
       console.log("ws error: ", e);
