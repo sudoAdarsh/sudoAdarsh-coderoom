@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from "react";
+import Editor from "@monaco-editor/react";
 
 function App() {
   const [room, setRoom] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [health, setHealth] = useState(null);
+  const [code, setCode] = useState("");
+  const [lang, setLang] = useState("python");
 
   useEffect(() => {
     fetch("http://127.0.0.1:8080/api/health")
@@ -127,6 +130,27 @@ function App() {
           Connect
         </button>
       )}
+
+      <div className="mt-6 border border-gray-700 rounded overflow-hidden">
+        <label htmlFor="language-select">Language: </label>
+        <select
+          id="language-select"
+          value={lang}
+          onChange={(e) => setLang(e.target.value)}
+        >
+          <option value="python">Python</option>
+          <option value="java">Java</option>
+          <option value="cpp">C++</option>
+          <option value="javascript">JavaScript</option>
+        </select>
+
+        <Editor
+          height="400px"
+          language={lang}
+          value={code}
+          onChange={(val) => setCode(val)}
+        />
+      </div>
     </div>
   );
 }
