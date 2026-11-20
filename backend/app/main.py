@@ -69,9 +69,13 @@ async def send(ws: WebSocket, type_, payload):
     )
 
 
+ROOMS: dict[str, set[WebSocket]] = {}
+
+
 @app.websocket("/ws/{room_id}")
 async def ws_room(websocket: WebSocket, room_id: str):
     await websocket.accept()
+    ROOMS.setdefault(room_id, set()).add(websocket)
     try:
         while True:
             raw = await websocket.receive_text()
@@ -105,8 +109,24 @@ async def ws_room(websocket: WebSocket, room_id: str):
                         "at": "pong",
                     },
                 )
+            elif type_ == "code_update":
+                for peer in list(ROOMS.get(room_id, set())):
+                    if peer is websocket:
+                        continue
+                    try:
+                        await send(
+                            peer, "code_update", {"text": payload.get("text", "")}
+                        )
+                    except Exception:
+                        pass
             else:
                 await send(websocket, "error", {"message": "unknown type"})
     except WebSocketDisconnect:
         print(f"client left {room_id}")
-        return
+        pass
+    finally:
+        peers = ROOMS.get(room_id)
+        if peers is not None:
+            peers.discard(websocket)
+            if not peers:
+                ROOMS.pop(room_id, None)

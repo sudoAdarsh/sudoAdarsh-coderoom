@@ -48,7 +48,7 @@ function App() {
   const connectWs = () => {
     if (!room) return;
     if (wsRef.current) wsRef.current.close();
-    const ws = new WebSocket(`ws://127.0.0.1:8080/ws/${room.id}`);
+    const ws = new WebSocket(`ws://127.0.0.1:8080/ws/asdfgh`);
     ws.onopen = () => {
       console.log("ws open");
       ws.send(
@@ -79,6 +79,9 @@ function App() {
           break;
         case "error":
           console.log("server error: ", msg.payload.message);
+          break;
+        case "code_update":
+          setCode(msg.payload.text);
           break;
         default:
           console.warn("Unkown message type: ", msg.type);
@@ -148,7 +151,18 @@ function App() {
           height="400px"
           language={lang}
           value={code}
-          onChange={(val) => setCode(val)}
+          onChange={(val) => {
+            const next = val ?? "";
+            setCode(next);
+            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+              wsRef.current.send(
+                JSON.stringify({
+                  type: "code_update",
+                  payload: { text: next },
+                }),
+              );
+            }
+          }}
         />
       </div>
     </div>
