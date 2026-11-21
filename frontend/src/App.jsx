@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import Editor from "@monaco-editor/react";
+import Editor, { loader } from "@monaco-editor/react";
+import * as monaco from "monaco-editor";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { MonacoBinding } from "y-monaco";
+
+loader.config({ monaco });
 
 function App() {
   const [room, setRoom] = useState(null);
